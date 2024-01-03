@@ -36,7 +36,6 @@
     "react-helmet-async": "^1.3.0",
     "react-hotkeys-hook": "^3.4.7",
     "react-router-dom": "^6.4.1",
-    "react-screen-wake-lock": "^3.0.2",
     "recoil": "^0.7.5"
   },
   "devDependencies": {
