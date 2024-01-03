@@ -1,20 +1,41 @@
 import { atom, useRecoilState } from 'recoil';
 
+import { openDB } from 'idb';
+
 import { Themes } from '@/theme/types';
 
-import type { AtomEffectParams } from '../types';
 import type { Actions } from './types';
 
-const themeModeState = atom({
-  key: 'theme-mode-state',
-  default: 'dark' as Themes,
-  effects: [synchronizeWithLocalStorage],
+// create database and object store
+const dbPromise = openDB('reactPwaCore', 1, {
+  upgrade(db) {
+    if (!db.objectStoreNames.contains('settings')) {
+      db.createObjectStore('settings');
+    }
+  },
 });
 
-function synchronizeWithLocalStorage({ setSelf, onSet }: AtomEffectParams) {
-  const storedTheme = localStorage.getItem('theme-mode');
+const themeModeState = atom<Themes>({
+  key: 'theme-mode-state',
+  default: 'dark' as Themes,
+  effects_UNSTABLE: [synchronizeWithIndexedDB as any],
+});
+
+async function synchronizeWithIndexedDB({
+  setSelf,
+  onSet,
+}: {
+  setSelf: (value: Themes) => void;
+  onSet: (callback: (value: Themes) => void) => void;
+}) {
+  const db = await dbPromise;
+  const storedTheme = await db.get('settings', 'theme-mode');
   storedTheme && setSelf(storedTheme);
-  onSet((value: Themes) => localStorage.setItem('theme-mode', value));
+  onSet((value) => {
+    (async () => {
+      await db.put('settings', value, 'theme-mode');
+    })();
+  });
 }
 
 function useTheme(): [Themes, Actions] {
